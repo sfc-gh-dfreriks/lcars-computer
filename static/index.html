@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>LCARS · Cortex Code</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lcars.css">
+</head>
+<body>
+<div class="frame">
+  <!-- top elbow -->
+  <div class="elbow top-left"></div>
+  <div class="bar top">
+    <span class="seg s1"></span><span class="seg s2"></span><span class="seg s3 grow"></span>
+    <h1>CORTEX CODE <span class="dim">· LCARS INTERFACE</span></h1>
+    <span class="seg s4"></span>
+  </div>
+
+  <!-- left column -->
+  <nav class="side">
+    <button id="talk" class="pill orange" title="Hold, or hold the space bar">TALK<small>HOLD · SPACE</small></button>
+    <button id="hands" class="pill peach">HANDS-FREE<small id="handsState">OFF</small></button>
+    <button id="cancel" class="pill red">ABORT<small>CANCEL REQUEST</small></button>
+    <button id="reset" class="pill lilac">NEW SESSION<small>CLEAR CONTEXT</small></button>
+    <button id="mute" class="pill blue">AUDIO<small id="muteState">ON</small></button>
+    <div class="numbers" id="numbers"></div>
+  </nav>
+
+  <!-- main viewport -->
+  <main class="view">
+    <section class="status-row">
+      <div class="readout"><label>STATUS</label><span id="status">STANDBY</span></div>
+      <div class="readout"><label>SESSION</label><span id="sid">—</span></div>
+      <div class="readout"><label>MODEL</label><span id="model">—</span></div>
+      <div class="readout"><label>STARDATE</label><span id="stardate">—</span></div>
+    </section>
+
+    <section class="panels">
+      <div class="panel log-panel">
+        <header><span class="tag orange">01</span> COMMUNICATIONS LOG</header>
+        <div id="log" class="log"></div>
+        <form id="typed" class="typed">
+          <input id="q" autocomplete="off" placeholder="COMPUTER, …  (type a request, or hold TALK)">
+          <button class="pill small orange" type="submit">ENGAGE</button>
+        </form>
+      </div>
+      <div class="panel ops-panel">
+        <header><span class="tag lilac">02</span> OPERATIONS</header>
+        <ul id="ops" class="ops"></ul>
+        <header class="sub"><span class="tag peach">03</span> PLAN</header>
+        <ul id="plan" class="ops plan"></ul>
+      </div>
+    </section>
+
+    <!-- question from the computer -->
+    <section id="ask" class="ask hidden">
+      <header><span class="tag red">INPUT REQUIRED</span> <span id="askQ"></span></header>
+      <div id="askOpts" class="ask-opts"></div>
+      <form id="askFree" class="typed hidden"><input id="askFreeText" placeholder="SPECIFY…"><button class="pill small red">TRANSMIT</button></form>
+    </section>
+  </main>
+
+  <!-- bottom elbow -->
+  <div class="elbow bottom-left"></div>
+  <div class="bar bottom">
+    <span class="seg s5"></span><span class="seg s6 grow"></span>
+    <span class="foot" id="hint">HOLD SPACE OR SAY "COMPUTER" IN HANDS-FREE MODE</span>
+    <span class="seg s7"></span>
+  </div>
+</div>
+<div id="pulse" class="pulse"></div>
+<script src="lcars.js"></script>
+</body>
+</html>
