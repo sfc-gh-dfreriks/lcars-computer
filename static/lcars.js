@@ -1,12 +1,12 @@
 // LCARS console: WebSocket to server.py, push-to-talk / hands-free capture, chime + voice queue.
 const $ = (id) => document.getElementById(id);
 const logEl = $('log'), opsEl = $('ops'), planEl = $('plan');
-let ws, muted = false, handsFree = false, question = null, lastWorking = 0, current = null;
+let SOUNDS = {}, ws, muted = false, handsFree = false, question = null, lastWorking = 0, current = null;
 
 // ---------------------------------------------------------------- audio out (one queue, in order)
 const queue = []; let playing = false;
 function play(url) { if (!muted) { queue.push(url); pump(); } }
-function chime(name) { play(`sounds/${name}.wav`); }
+function chime(name) { play(SOUNDS[name] || `sounds/${name}.wav`); }
 function pump() {
   if (playing || !queue.length) return;
   playing = true; $('pulse').classList.add('speaking');
@@ -38,6 +38,7 @@ function connect() {
   ws.onmessage = (e) => {
     const m = JSON.parse(e.data);
     switch (m.type) {
+      case 'sounds': SOUNDS = m.urls; break;
       case 'status': entry('system', 'SYSTEM', esc(m.text)); break;
       case 'session':
         $('sid').textContent = m.sessionId.slice(0, 8).toUpperCase(); $('model').textContent = (m.model || '').toUpperCase();

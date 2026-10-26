@@ -115,3 +115,45 @@ def build_chimes():
         path = os.path.join(SOUNDS, f"{name}.wav")
         if not os.path.exists(path):
             sf.write(path, fn(), SR)
+
+
+# ------------------------------------------------------------------ TrekCore sound pack (local only)
+# Files from https://www.trekcore.com/audio/computer/ are downloaded into static/sounds/trek/library/,
+# which is git-ignored, so they stay on this Mac. Change the mapping here to try other sounds; any
+# event without a file falls back to the synthesized chime above.
+TREK_LIBRARY = os.path.join(SOUNDS, "trek", "library")
+TREK_SOUNDS = {
+    "ack": "input_ok_1_clean",          # request acknowledged
+    "working": "computer_work_beep",    # tool running
+    "question": "hailbeep_clean",       # input required
+    "done": "computerbeep_1",           # task complete
+    "error": "computer_error",          # unable to comply
+    "listen": "computerbeep_9",         # mic open (hold TALK / space bar)
+}
+
+
+def build_trek_sounds():
+    """Convert the mapped TrekCore MP3s to trimmed, levelled WAVs in static/sounds/trek/."""
+    out_dir = os.path.join(SOUNDS, "trek")
+    for event, name in TREK_SOUNDS.items():
+        src, dst = os.path.join(TREK_LIBRARY, f"{name}.mp3"), os.path.join(out_dir, f"{event}.wav")
+        if not os.path.exists(src):
+            continue
+        marker = dst + ".src"                   # remembers which library file the WAV came from
+        if os.path.exists(dst) and os.path.exists(marker) and open(marker).read() == name:
+            continue
+        subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", src, "-af",
+                        "silenceremove=start_periods=1:start_threshold=-50dB,areverse,"
+                        "silenceremove=start_periods=1:start_threshold=-50dB,areverse,loudnorm=I=-20:TP=-2",
+                        "-ar", str(SR), "-ac", "1", dst], check=True)
+        with open(marker, "w") as f:
+            f.write(name)
+
+
+def sound_urls():
+    """{event: url} preferring the TrekCore pack, else the synthesized chime."""
+    urls = {}
+    for event in CHIMES:
+        trek = os.path.join(SOUNDS, "trek", f"{event}.wav")
+        urls[event] = f"sounds/trek/{event}.wav" if os.path.exists(trek) else f"sounds/{event}.wav"
+    return urls

@@ -34,9 +34,28 @@ Allow microphone access the first time. The server only listens on 127.0.0.1.
 
 ## Sounds
 
-Original synthesized tones (`voice.py` → `static/sounds/`), in the spirit of the TNG chirps:
-`ack` (request acknowledged), `working` (tool running, at most every 6 s), `question`
-(input required), `done`, `error`, `listen` (mic open).
+If the TrekCore computer sounds are present, they are used; otherwise the app falls back to
+original synthesized tones (`voice.py` → `static/sounds/`).
+
+| Event | TrekCore file (`voice.TREK_SOUNDS`) | Fallback |
+|---|---|---|
+| Request acknowledged | `input_ok_1_clean` | rising two-note chirp |
+| Tool running (at most every 6 s) | `computer_work_beep` | soft three-note burble |
+| Input required | `hailbeep_clean` | falling-rising tones |
+| Task complete | `computerbeep_1` | ascending triad |
+| Unable to comply | `computer_error` | low double tone |
+| Mic open (hold TALK / space bar) | `computerbeep_9` | short blip |
+
+The MP3s live in `static/sounds/trek/library/` (from https://www.trekcore.com/audio/computer/),
+which is **git-ignored**, so they stay on this Mac. To use a different sound, drop its MP3 in
+that folder, change the name in `TREK_SOUNDS`, and restart; it is trimmed and levelled to
+`static/sounds/trek/<event>.wav` automatically. To fetch the default set on a new machine:
+
+```bash
+mkdir -p static/sounds/trek/library && cd static/sounds/trek/library
+for f in input_ok_1_clean computer_work_beep hailbeep_clean computerbeep_1 computer_error computerbeep_9; do
+  curl -sfLO "https://www.trekcore.com/audio/computer/$f.mp3"; done
+```
 
 ## Behaviour
 
@@ -51,8 +70,8 @@ Original synthesized tones (`voice.py` → `static/sounds/`), in the spirit of t
 ## Notes
 
 - The voice is in the *style* of the Enterprise-D computer (measured, even, clipped, with a light
-  speaker treatment). It is not a clone of Majel Barrett-Roddenberry's voice and uses no audio
-  from the show; her voice likeness belongs to her estate.
+  speaker treatment). It is not a clone of Majel Barrett-Roddenberry's voice; her voice likeness
+  belongs to her estate. The TrekCore sound effects are kept out of this repo.
 - LCARS is the Star Trek interface design; this is an original, personal-use homage.
 - Bypass means spoken requests can change things in Snowflake and on this Mac without a
   confirmation step. Use ABORT if it starts something you didn't intend.

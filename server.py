@@ -145,6 +145,7 @@ async def ws_endpoint(ws: WebSocket):
     await ws.accept()
     c = Console(ws)
     try:
+        await c.emit({"type": "sounds", "urls": voice.sound_urls()})
         await c.start_session()
         await c.say("Computer online. Ready for your request.")
         while True:
@@ -196,6 +197,7 @@ app.mount("/", StaticFiles(directory=os.path.join(HERE, "static"), html=True), n
 
 if __name__ == "__main__":
     voice.build_chimes()
+    voice.build_trek_sounds()
     log.info("warming up speech recognition…")
     voice.warm_up()
     log.info("LCARS computer on http://127.0.0.1:%d", PORT)
