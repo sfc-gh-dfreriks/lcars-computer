@@ -44,7 +44,7 @@ original synthesized tones (`voice.py` → `static/sounds/`).
 | Input required | `hailbeep_clean` | falling-rising tones |
 | Task complete | `computerbeep_1` | ascending triad |
 | Unable to comply | `computer_error` | low double tone |
-| Mic open (hold TALK / space bar) | `computerbeep_9` | short blip |
+| Mic open (hold TALK / space bar) | `computerbeep_8` | short blip |
 
 The MP3s live in `static/sounds/trek/library/` (from https://www.trekcore.com/audio/computer/),
 which is **git-ignored**, so they stay on this Mac. To use a different sound, drop its MP3 in
@@ -53,7 +53,7 @@ that folder, change the name in `TREK_SOUNDS`, and restart; it is trimmed and le
 
 ```bash
 mkdir -p static/sounds/trek/library && cd static/sounds/trek/library
-for f in input_ok_1_clean computer_work_beep hailbeep_clean computerbeep_1 computer_error computerbeep_9; do
+for f in input_ok_1_clean computer_work_beep hailbeep_clean computerbeep_1 computer_error computerbeep_8; do
   curl -sfLO "https://www.trekcore.com/audio/computer/$f.mp3"; done
 ```
 

@@ -128,7 +128,7 @@ TREK_SOUNDS = {
     "question": "hailbeep_clean",       # input required
     "done": "computerbeep_1",           # task complete
     "error": "computer_error",          # unable to comply
-    "listen": "computerbeep_9",         # mic open (hold TALK / space bar)
+    "listen": "computerbeep_8",         # mic open (hold TALK / space bar)
 }
 
 
