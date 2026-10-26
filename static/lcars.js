@@ -166,9 +166,9 @@ $('cancel').onclick = () => ws.send(JSON.stringify({ type: 'cancel' }));
 $('reset').onclick = () => ws.send(JSON.stringify({ type: 'reset' }));
 $('mute').onclick = () => { muted = !muted; $('muteState').textContent = muted ? 'MUTED' : 'ON'; if (muted) queue.length = 0; };
 
-// decorative LCARS number block and a TNG-style stardate (1987 = 41000, the first TNG season)
-function stardate() { const n = new Date(), y = n.getFullYear(), start = new Date(y, 0, 1), end = new Date(y + 1, 0, 1);
-  return (41000 + (y - 1987) * 1000 + 1000 * (n - start) / (end - start)).toFixed(1); }
+// decorative LCARS number block and the stardate, shown as today's date in YYYYMM.DD form
+function stardate() { const n = new Date(), p = (x) => String(x).padStart(2, '0');
+  return `${n.getFullYear()}${p(n.getMonth() + 1)}.${p(n.getDate())}`; }
 setInterval(() => { $('stardate').textContent = stardate(); }, 1000); $('stardate').textContent = stardate();
 $('numbers').innerHTML = Array.from({ length: 24 }, () => `${Math.floor(Math.random() * 90 + 10)}-${Math.floor(Math.random() * 9000 + 1000)}`).join('<br>');
 connect();
