@@ -44,6 +44,8 @@ function connect() {
         $('sid').textContent = m.sessionId.slice(0, 8).toUpperCase(); $('model').textContent = (m.model || '').toUpperCase();
         setStatus('STANDBY'); opsEl.innerHTML = ''; planEl.innerHTML = ''; break;
       case 'heard': entry('you', 'YOU', esc(m.text)); break;
+      case 'armed': chime('ack'); setStatus('LISTENING', 'listening'); entry('system', 'COMPUTER', 'Awaiting request…'); break;
+      case 'ignored': setStatus('STANDBY'); entry('system', 'IGNORED · NO WAKE WORD', esc(m.text)); break;
       case 'ack': chime('ack'); break;
       case 'working': setStatus('WORKING', 'working'); current = entry('computer', 'COMPUTER', '<span class="spoken">WORKING…</span>'); current.raw = ''; break;
       case 'text':
@@ -140,21 +142,29 @@ $('talk').addEventListener('pointerdown', startTalk); $('talk').addEventListener
 document.addEventListener('keydown', (e) => { if (e.code === 'Space' && e.target.tagName !== 'INPUT' && !e.repeat) { e.preventDefault(); startTalk(); } });
 document.addEventListener('keyup', (e) => { if (e.code === 'Space' && e.target.tagName !== 'INPUT') { e.preventDefault(); stopTalk(); } });
 
-// hands-free: energy-based voice activity detection; the server only acts on phrases that start
-// with "Computer" (or answer a pending question). The mic is ignored while the computer speaks.
-let voiced = 0, silent = 0, seg = [];
+// hands-free: voice activity detection with an adaptive noise floor. The server acts on phrases
+// that start with "Computer"; "Computer" on its own chirps and arms the next phrase as the request.
+// The mic is ignored while the computer itself is speaking.
+let voiced = 0, silent = 0, seg = [], noise = 0.005, level = 0;
 function vad(d) {
-  if (speaking()) { seg = []; voiced = 0; return; }
   let e = 0; for (const x of d) e += x * x; e = Math.sqrt(e / d.length);
-  const loud = e > 0.02;
+  level = 0.7 * level + 0.3 * e;
+  if (speaking()) { seg = []; voiced = 0; silent = 0; return; }
+  const loud = e > Math.max(0.006, noise * 3);
+  if (!loud) noise = 0.97 * noise + 0.03 * e;           // learn the room's background level
   if (loud) { voiced++; silent = 0; } else silent++;
   if (voiced) seg.push(new Float32Array(d));
   const segSecs = seg.length * 2048 / 16000;
-  if (voiced && (silent > 9 || segSecs > 20)) {          // ~1.1 s of silence ends the phrase
-    if (voiced > 4 && segSecs > 0.6) send(seg, !question);
+  if (voiced && (silent > 7 || segSecs > 20)) {          // ~0.9 s of silence ends the phrase
+    if (voiced >= 2 && segSecs > 0.35) { send(seg, !question); setStatus('PROCESSING', 'working'); }
     seg = []; voiced = 0; silent = 0;
   }
 }
+setInterval(() => {                                       // live mic level on the HANDS-FREE pill
+  if (!handsFree) return;
+  const bars = Math.min(8, Math.round(level / Math.max(0.006, noise * 3) * 3));
+  $('handsState').textContent = 'ON · ' + '▮'.repeat(bars) + '▯'.repeat(8 - bars);
+}, 120);
 $('hands').onclick = async () => {
   handsFree = !handsFree; $('handsState').textContent = handsFree ? 'ON · SAY "COMPUTER"' : 'OFF'; $('hands').classList.toggle('on', handsFree);
   if (handsFree) { await mic(); await ctx.resume(); mode = 'vad'; chime('listen'); } else mode = 'ptt';

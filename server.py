@@ -14,6 +14,7 @@ import logging
 import os
 import re
 import tempfile
+import time
 
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -29,7 +30,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PORT = int(os.environ.get("LCARS_PORT", "1701"))
 app = FastAPI()
 
-WAKE = re.compile(r"^\s*(computer|ok computer)[\s,.!:;-]*", re.I)
+# Whisper sometimes hears the wake word as a near miss, so accept the common ones.
+WAKE = re.compile(r"^\s*(ok(ay)?\s+|hey\s+)?(computer|commuter|compuer|komputer|computers|compute)\b[\s,.!:;-]*", re.I)
+ARM_SECS = 8                                    # after a bare "Computer", the next phrase is the request
 CANCEL = re.compile(r"^(cancel|abort|belay that|stop|never ?mind)\b", re.I)
 RESET = re.compile(r"^(new session|reset|start over|clear session)\b", re.I)
 NUMBERS = {"one": 1, "first": 1, "1": 1, "two": 2, "second": 2, "2": 2, "three": 3, "third": 3, "3": 3,
@@ -71,6 +74,7 @@ class Console:
         self.session = None
         self.reply = ""
         self.question = None
+        self.armed_until = 0.0
 
     async def emit(self, ev: dict):
         await self.ws.send_text(json.dumps(ev))
@@ -160,9 +164,18 @@ async def ws_endpoint(ws: WebSocket):
                     said = await asyncio.to_thread(voice.listen, f.name)
                 finally:
                     os.unlink(f.name)
-                # Hands-free only acts on "Computer, …" (or an answer to a pending question).
-                if hands_free and not c.question and not WAKE.match(said or ""):
-                    continue
+                if hands_free and not c.question:
+                    woke = WAKE.match(said or "")
+                    if woke and not WAKE.sub("", said).strip(" .!?"):
+                        # "Computer" on its own: chirp and take the next phrase as the request.
+                        c.armed_until = time.monotonic() + ARM_SECS
+                        await c.emit({"type": "armed"})
+                        continue
+                    if not woke and time.monotonic() > c.armed_until:
+                        if said:
+                            await c.emit({"type": "ignored", "text": said})
+                        continue
+                    c.armed_until = 0.0
                 if said:
                     await c.handle_text(said)
                 elif not hands_free:
